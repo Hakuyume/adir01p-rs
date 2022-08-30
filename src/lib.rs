@@ -83,7 +83,7 @@ where
         Ok(std::str::from_utf8(version.split(|&c| c == 0).next().unwrap())?.to_owned())
     }
 
-    pub fn record_start(&self, freq: u16) -> Result<(), Error> {
+    pub fn recv_start(&self, freq: u16) -> Result<(), Error> {
         let mut request = [0; 8];
         request[0] = 0x31;
         request[1..3].copy_from_slice(&freq.to_be_bytes());
@@ -91,12 +91,9 @@ where
         Ok(())
     }
 
-    pub fn record_stop(&self) -> Result<(), Error> {
+    pub fn recv_stop(&self) -> Result<Vec<Bit>, Error> {
         self.communicate(&[0x32])?;
-        Ok(())
-    }
 
-    pub fn read(&self) -> Result<Vec<Bit>, Error> {
         let mut bits = Vec::new();
         loop {
             let response = self.communicate(&[0x33])?;
@@ -117,6 +114,7 @@ where
                 break;
             }
         }
+
         Ok(bits)
     }
 
