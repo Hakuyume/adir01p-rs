@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 rusb = "0.9"
 thiserror = "1"
+
+[dev-dependencies]
+clap = { version = "3", features = ["derive"] }
