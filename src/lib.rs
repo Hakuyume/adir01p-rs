@@ -1,4 +1,5 @@
 use rusb::{DeviceHandle, GlobalContext, UsbContext};
+use std::cmp;
 use std::str::Utf8Error;
 use std::time::Duration;
 
@@ -118,50 +119,38 @@ where
         Ok(bits)
     }
 
-    pub fn send<B>(&self, freq: u16, bits: B) -> Result<(), Error>
-    where
-        B: IntoIterator<Item = Bit>,
-        B::IntoIter: ExactSizeIterator,
-    {
-        let mut bits = bits.into_iter();
-        let total = bits.len();
-        let mut offset = 0;
-
-        loop {
-            let mut request = [0; 64];
-            request[0] = 0x34;
-            request[1..3].copy_from_slice(&(total as u16).to_be_bytes());
-            request[3..5].copy_from_slice(&(offset as u16).to_be_bytes());
-
-            let mut size = 0;
-            for (chunk, bit) in request[6..].chunks_exact_mut(4).zip(bits.by_ref()) {
-                for (c, b) in chunk.iter_mut().zip(
-                    bit.on
-                        .to_be_bytes()
-                        .into_iter()
-                        .chain(bit.off.to_be_bytes()),
-                ) {
-                    *c = b;
+    pub fn send(&self, freq: u16, bits: &[Bit]) -> Result<(), Error> {
+        {
+            let total = bits.len();
+            let mut bits = bits.iter();
+            let mut offset = 0;
+            loop {
+                let mut request = [0; 64];
+                let size = cmp::min(request[6..].len() / 4, bits.len());
+                request[0] = 0x34;
+                request[1..3].copy_from_slice(&(total as u16).to_be_bytes());
+                request[3..5].copy_from_slice(&(offset as u16).to_be_bytes());
+                request[5] = size as _;
+                for (chunk, bit) in request[6..].chunks_exact_mut(4).zip(bits.by_ref()) {
+                    chunk[..2].copy_from_slice(&bit.on.to_be_bytes());
+                    chunk[2..].copy_from_slice(&bit.off.to_be_bytes());
                 }
-                size += 1;
-            }
-            request[5] = size;
 
-            self.communicate(&request)?;
-
-            if size > 0 {
-                offset += size;
-            } else {
-                break;
+                self.communicate(&request)?;
+                if request[5] > 0 {
+                    offset += size;
+                } else {
+                    break;
+                }
             }
         }
-
-        let mut request = [0; 5];
-        request[0] = 0x35;
-        request[1..3].copy_from_slice(&freq.to_be_bytes());
-        request[3..5].copy_from_slice(&(total as u16).to_be_bytes());
-        self.communicate(&request)?;
-
+        {
+            let mut request = [0; 5];
+            request[0] = 0x35;
+            request[1..3].copy_from_slice(&freq.to_be_bytes());
+            request[3..5].copy_from_slice(&(bits.len() as u16).to_be_bytes());
+            self.communicate(&request)?;
+        }
         Ok(())
     }
 }
