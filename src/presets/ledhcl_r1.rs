@@ -1,3 +1,5 @@
+//! アイリスオーヤマ LEDHCL-R1
+
 use crate::Bit;
 
 pub fn freq() -> u16 {
