@@ -1,3 +1,5 @@
+pub mod presets;
+
 use rusb::{DeviceHandle, GlobalContext, UsbContext};
 use std::cmp;
 use std::str::Utf8Error;
