@@ -32,11 +32,10 @@ pub fn night_light_ch1(repeat: usize) -> Vec<Bit> {
 
 fn bits(bytes: [u8; 5], repeat: usize) -> Vec<Bit> {
     const T: u16 = 20;
-    let mut bits = Vec::new();
-    bits.push(Bit {
+    let mut bits = vec![Bit {
         on: 4 * T,
         off: 2 * T,
-    });
+    }];
     for _ in 0..repeat {
         bits.push(Bit {
             on: 11 * T,
