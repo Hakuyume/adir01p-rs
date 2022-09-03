@@ -20,7 +20,7 @@ enum Command {
 fn main() {
     let opts = Opts::parse();
 
-    let device = adir01p::open(Duration::from_millis(200)).unwrap();
+    let mut device = adir01p::open(Duration::from_millis(200)).unwrap();
     dbg!(device.firmware_version().unwrap());
 
     let bits = match &opts.command {
