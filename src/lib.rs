@@ -122,7 +122,6 @@ where
                 break;
             }
         }
-
         Ok(bits)
     }
 
